@@ -1,96 +1,121 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Alert, Platform } from 'react-native';
+import {
+  Alert,
+  I18nManager,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react-native';
 import PetForm from '@/components/admin/PetForm';
 import { useAdminPets } from '@/hooks/usePets';
 import { Pet } from '@/components/pets/PetCard';
+import { useTranslation } from 'react-i18next';
 
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const { pets, updatePet, deletePet, loading } = useAdminPets();
   const [pet, setPet] = useState<Pet | null>(null);
-  
+  const isRTL = I18nManager.isRTL;
+
   useEffect(() => {
     if (id && pets.length > 0) {
-      const foundPet = pets.find(p => p.id === id);
+      const foundPet = pets.find((p) => p.id === id);
       if (foundPet) {
         setPet(foundPet);
       }
     }
   }, [id, pets]);
-  
+
   const handleUpdatePet = async (formData: any) => {
+    if (!id) return;
     try {
-      if (!id) return;
-      
       await updatePet(id, formData);
       router.back();
     } catch (error) {
       console.error('Error updating pet:', error);
     }
   };
-  
+
   const handleDeletePet = () => {
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
       if (!id) return;
-      
-      deletePet(id)
-        .then(() => {
-          router.back();
-        })
-        .catch(error => {
-          console.error('Error deleting pet:', error);
-        });
+      try {
+        await deletePet(id);
+        router.back();
+      } catch (error) {
+        console.error('Error deleting pet:', error);
+      }
     };
-    
+
     if (Platform.OS === 'web') {
-      if (confirm('Are you sure you want to delete this pet?')) {
+      if (confirm(t('form.confirmDeleteWeb'))) {
         confirmDelete();
       }
     } else {
-      Alert.alert(
-        'Delete Pet',
-        'Are you sure you want to delete this pet? This action cannot be undone.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: confirmDelete }
-        ]
-      );
+      Alert.alert(t('form.confirmDeleteTitle'), t('form.confirmDeleteMsg'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('form.delete'),
+          style: 'destructive',
+          onPress: confirmDelete,
+        },
+      ]);
     }
   };
-  
+
   if (!pet) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color="#1F2937" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            {isRTL ? (
+              <ChevronRight size={24} color="#1F2937" />
+            ) : (
+              <ChevronLeft size={24} color="#1F2937" />
+            )}
           </TouchableOpacity>
-          <Text style={styles.title}>Edit Pet</Text>
+          <Text style={styles.title}>{t('form.edit')}</Text>
           <View style={styles.spacer} />
         </View>
-        
+
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading pet details...</Text>
+          <Text style={styles.loadingText}>{t('form.loading')}</Text>
         </View>
       </SafeAreaView>
     );
   }
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={24} color="#1F2937" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          {isRTL ? (
+            <ChevronRight size={24} color="#1F2937" />
+          ) : (
+            <ChevronLeft size={24} color="#1F2937" />
+          )}
         </TouchableOpacity>
-        <Text style={styles.title}>Edit Pet</Text>
+
+        <Text style={styles.title}>{t('form.edit')}</Text>
+
         <TouchableOpacity onPress={handleDeletePet} style={styles.deleteButton}>
           <Trash2 size={24} color="#EF4444" />
         </TouchableOpacity>
       </View>
-      
+
       <PetForm pet={pet} onSubmit={handleUpdatePet} isLoading={loading} />
     </SafeAreaView>
   );

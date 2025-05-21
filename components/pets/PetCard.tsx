@@ -1,13 +1,22 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { Heart, MapPin, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import Animated, { 
-  useAnimatedStyle, 
-  useSharedValue, 
+import { useTranslation } from 'react-i18next';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withSequence,
-  withDelay
+  withDelay,
 } from 'react-native-reanimated';
 
 export type Pet = {
@@ -32,13 +41,19 @@ type PetCardProps = {
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 16;
-const CARD_WIDTH = Platform.OS === 'web' ? 380 : width - (CARD_MARGIN * 2);
+const CARD_WIDTH = Platform.OS === 'web' ? 380 : width - CARD_MARGIN * 2;
 
-export default function PetCard({ pet, isFavorite = false, onToggleFavorite, index = 0 }: PetCardProps) {
+export default function PetCard({
+  pet,
+  isFavorite = false,
+  onToggleFavorite,
+  index = 0,
+}: PetCardProps) {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const scale = useSharedValue(0.8);
   const opacity = useSharedValue(0);
-  
+
   React.useEffect(() => {
     const delay = index * 100;
     scale.value = withDelay(
@@ -50,7 +65,7 @@ export default function PetCard({ pet, isFavorite = false, onToggleFavorite, ind
     );
     opacity.value = withDelay(delay, withSpring(1));
   }, []);
-  
+
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
@@ -70,10 +85,9 @@ export default function PetCard({ pet, isFavorite = false, onToggleFavorite, ind
   };
 
   const getAgeDisplay = () => {
-    if (pet.age === 1) {
-      return `1 ${pet.age_unit.slice(0, -1)}`; // Remove 's' for singular
-    }
-    return `${pet.age} ${pet.age_unit}`;
+    const unitKey = `form.units.${pet.age_unit}`; // e.g. form.units.days
+    const label = t(unitKey);
+    return `${pet.age} ${label}`;
   };
 
   return (
@@ -87,7 +101,7 @@ export default function PetCard({ pet, isFavorite = false, onToggleFavorite, ind
           <Image source={{ uri: pet.image_url }} style={styles.image} />
           {pet.is_friendly && (
             <View style={styles.friendlyBadge}>
-              <Text style={styles.friendlyText}>Friendly</Text>
+              <Text style={styles.friendlyText}>{t('form.friendly')}</Text>
             </View>
           )}
           {onToggleFavorite && (
@@ -104,17 +118,15 @@ export default function PetCard({ pet, isFavorite = false, onToggleFavorite, ind
             </TouchableOpacity>
           )}
         </View>
-        
+
         <View style={styles.infoContainer}>
           <View style={styles.header}>
             <Text style={styles.name}>{pet.name}</Text>
             <View style={styles.typeContainer}>
-              <Text style={styles.type}>
-                {pet.type.charAt(0).toUpperCase() + pet.type.slice(1)}
-              </Text>
+              <Text style={styles.type}>{t(`form.types.${pet.type}`)}</Text>
             </View>
           </View>
-          
+
           <View style={styles.detailsContainer}>
             <View style={styles.detailItem}>
               <Calendar size={16} color="#6B7280" />
@@ -122,11 +134,17 @@ export default function PetCard({ pet, isFavorite = false, onToggleFavorite, ind
             </View>
             <View style={styles.detailItem}>
               <MapPin size={16} color="#6B7280" />
-              <Text style={styles.detailText}>Available</Text>
+              <Text style={styles.detailText}>
+                {t('common.available', 'Available')}
+              </Text>
             </View>
           </View>
-          
-          <Text style={styles.description} numberOfLines={2}>
+
+          <Text
+            style={styles.description}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
             {pet.description}
           </Text>
         </View>
@@ -230,5 +248,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#4B5563',
     lineHeight: 22,
+    height: 44,
+    overflow: 'hidden',
   },
 });

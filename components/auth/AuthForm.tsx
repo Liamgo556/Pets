@@ -9,21 +9,22 @@ import {
   Platform,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 type AuthFormProps = {
   onSuccess: () => void;
 };
 
 export default function AuthForm({ onSuccess }: AuthFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isLogin, setIsLogin] = useState(true);
 
-  const handleAuth = async () => {
+  const handleLogin = async () => {
     if (!email || !password) {
-      setErrorMsg('Please enter an email and password');
+      setErrorMsg(t('auth.missingFields'));
       return;
     }
 
@@ -31,40 +32,45 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       setLoading(true);
       setErrorMsg(null);
 
-      if (isLogin) {
-        // Sign in
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
-      } else {
-        // Sign up
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+      if (error) throw error;
 
-        if (error) throw error;
+      const userId = data.user?.id;
+
+      if (!userId) {
+        throw new Error('User not found');
+      }
+
+      // Check admin table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (adminError || !adminData) {
+        await supabase.auth.signOut();
+        throw new Error('Access denied: You are not an admin.');
       }
 
       onSuccess();
     } catch (error: any) {
-      setErrorMsg(error.message || 'An error occurred during authentication');
+      setErrorMsg(error.message || t('auth.errorGeneric'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
-      <Text style={styles.title}>{isLogin ? 'Sign In' : 'Create Account'}</Text>
-      <Text style={styles.subtitle}>
-        {isLogin
-          ? 'Sign in to access admin features'
-          : 'Create an admin account to manage pets'}
-      </Text>
+    <View
+      style={[styles.container, Platform.OS === 'web' && styles.webContainer]}
+    >
+      <Text style={styles.title}>{t('auth.signIn')}</Text>
+      <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
 
       {errorMsg && (
         <View style={styles.errorContainer}>
@@ -73,49 +79,38 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       )}
 
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t('auth.email')}</Text>
         <TextInput
           style={styles.input}
           value={email}
           onChangeText={setEmail}
-          placeholder="email@example.com"
+          placeholder={t('auth.emailPlaceholder')}
           keyboardType="email-address"
           autoCapitalize="none"
         />
       </View>
 
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t('auth.password')}</Text>
         <TextInput
           style={styles.input}
           value={password}
           onChangeText={setPassword}
-          placeholder="Your password"
+          placeholder={t('auth.passwordPlaceholder')}
           secureTextEntry
         />
       </View>
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleAuth}
+        onPress={handleLogin}
         disabled={loading}
       >
         {loading ? (
           <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Text style={styles.buttonText}>
-            {isLogin ? 'Sign In' : 'Create Account'}
-          </Text>
+          <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
         )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.switchMode}
-        onPress={() => setIsLogin(!isLogin)}
-      >
-        <Text style={styles.switchModeText}>
-          {isLogin ? "Don't have an account? Create one" : 'Already have an account? Sign in'}
-        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -135,6 +130,7 @@ const styles = StyleSheet.create({
   webContainer: {
     maxWidth: 400,
     width: '100%',
+    alignSelf: 'center',
   },
   title: {
     fontSize: 24,
@@ -187,14 +183,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#B91C1C',
-    fontSize: 14,
-  },
-  switchMode: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  switchModeText: {
-    color: '#6366F1',
     fontSize: 14,
   },
 });

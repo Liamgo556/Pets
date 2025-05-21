@@ -1,0 +1,125 @@
+{
+  "tabs": {
+    "browse": "דף הבית",
+    "search": "חיפוש",
+    "favorites": "מועדפים",
+    "alerts": "התראות",
+    "admin": "ניהול",
+    "account": "חשבון"
+  },
+  "admin": {
+    "title": "כניסת מנהל",
+    "signInToManage": "היכנס כדי לנהל את חיות המחמד",
+    "dashboard": "לוח בקרה למנהל",
+    "description": "ניהול חיות לאימוץ",
+    "welcome": "ברוך הבא",
+    "addPet": "הוספת חיית מחמד",
+    "loadingPets": "טוען חיות...",
+    "managePets": "ניהול חיות",
+    "noPets": "לא נוספו חיות מחמד"
+  },
+  "auth": {
+    "signOut": "התנתק",
+    "signOutConfirm": "האם אתה בטוח שברצונך להתנתק?",
+    "signIn": "התחבר",
+    "signInSubtitle": "התחבר כדי לגשת לתכונות ניהול",
+    "createAccount": "צור חשבון",
+    "createAccountSubtitle": "צור חשבון ניהול לניהול חיות מחמד",
+    "email": "אימייל",
+    "emailPlaceholder": "example@email.com",
+    "password": "סיסמה",
+    "passwordPlaceholder": "הסיסמה שלך",
+    "missingFields": "אנא הזן אימייל וסיסמה",
+    "errorGeneric": "אירעה שגיאה במהלך ההתחברות",
+    "switchToSignUp": "אין לך חשבון? צור אחד",
+    "switchToSignIn": "כבר יש לך חשבון? התחבר"
+  },
+  "common": {
+    "cancel": "ביטול",
+    "available": "זמין"
+  },
+  "form": {
+    "name": "שם",
+    "namePlaceholder": "שם החיה",
+    "age": "גיל",
+    "ageUnit": "יחידת גיל",
+    "type": "סוג חיה",
+    "types": {
+      "dog": "כלב",
+      "cat": "חתול",
+      "other": "אחר"
+    },
+    "units": {
+      "days": "ימים",
+      "months": "חודשים",
+      "years": "שנים"
+    },
+    "friendly": "חברותי",
+    "isFriendly": "ידידותי",
+    "description": "תיאור",
+    "descriptionPlaceholder": "תאר/י את החיה...",
+    "phone": "טלפון ליצירת קשר",
+    "phonePlaceholder": "מספר טלפון",
+    "imageLabel": "תמונת חיה (חובה)",
+    "uploadImage": "העלה תמונה",
+    "submit": "הוסף חיה",
+    "update": "עדכן חיה",
+    "success": "החיה נוספה בהצלחה!",
+    "uploadErrorTitle": "שגיאה בהעלאה",
+    "uploadErrorMsg": "העלאת התמונה נכשלה",
+    "missingFieldsTitle": "שדות חסרים",
+    "missingFieldsMsg": "אנא מלא/י את כל השדות הנדרשים",
+    "invalidAgeTitle": "גיל לא תקין",
+    "invalidAgeMsg": "אנא הכנס/י גיל מספרי תקין",
+    "invalidPhoneTitle": "מספר טלפון לא תקין",
+    "invalidPhoneMsg": "אנא הכנס/י מספר טלפון תקין",
+    "submitErrorTitle": "שגיאת שליחה",
+    "submitErrorMsg": "משהו השתבש. אנא נסה/י שוב.",
+    "edit": "עריכת חיה",
+    "loading": "טוען פרטי חיה...",
+    "confirmDeleteTitle": "מחיקת חיה",
+    "confirmDeleteMsg": "האם אתה בטוח שברצונך למחוק את החיה הזו? פעולה זו אינה ניתנת לביטול.",
+    "confirmDeleteWeb": "האם אתה בטוח שברצונך למחוק את החיה הזו?",
+    "delete": "מחק"
+  },
+  "notFound": {
+    "title": "אופס!",
+    "message": "המסך הזה לא קיים.",
+    "goHome": "חזור לדף הבית"
+  },
+  "search": {
+    "title": "חיפוש חיות",
+    "subtitle": "מצא/י את החבר/ה החדש/ה שלך",
+    "placeholder": "חפש/י לפי שם...",
+    "emptyTitle": "חפש/י חיות לפי שם",
+    "emptySubtext": "השתמש/י במסננים כדי לצמצם את התוצאות"
+  },
+  "petList": {
+    "loading": "מחפש חברים מתאימים...",
+    "emptyTitle": "לא נמצאו חיות מחמד",
+    "emptySubtitle": "נסה שוב מאוחר יותר לחיות חדשות לאימוץ!"
+  },
+  "filter": {
+    "button": "סינון",
+    "title": "סינון חיות",
+    "type": "סוג חיה",
+    "types": {
+      "dog": "כלב",
+      "cat": "חתול",
+      "other": "אחר"
+    },
+    "temperament": "אופי",
+    "temperamentValues": {
+      "any": "הכל",
+      "friendly": "חברותי",
+      "notFriendly": "כלול גם לא מסומנים כחברותיים"
+    },
+    "reset": "איפוס",
+    "apply": "החל"
+  },
+  "favorites": {
+    "subtitle": "חיות ששמרת",
+    "emptyTitle": "אין חיות מועדפות עדיין",
+    "emptySubtitle": "שמור חיות אהובות על ידי לחיצה על אייקון הלב"
+  }
+}

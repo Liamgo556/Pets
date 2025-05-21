@@ -1,0 +1,141 @@
+{
+  "tabs": {
+    "browse": "Browse",
+    "search": "Search",
+    "favorites": "Favorites",
+    "alerts": "Alerts",
+    "admin": "Admin",
+    "account": "Account"
+  },
+  "admin": {
+    "title": "Admin Access",
+    "signInToManage": "Sign in to manage pets",
+    "dashboard": "Admin Dashboard",
+    "description": "Manage pets for adoption",
+    "welcome": "Welcome",
+    "addPet": "Add New Pet",
+    "loadingPets": "Loading pets...",
+    "managePets": "Manage Pets",
+    "noPets": "No pets added yet"
+  },
+  "auth": {
+    "signOut": "Sign Out",
+    "signOutConfirm": "Are you sure you want to sign out?",
+    "signIn": "Sign In",
+    "signInSubtitle": "Sign in to access admin features",
+    "createAccount": "Create Account",
+    "createAccountSubtitle": "Create an admin account to manage pets",
+    "email": "Email",
+    "emailPlaceholder": "email@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "missingFields": "Please enter an email and password",
+    "errorGeneric": "An error occurred during authentication",
+    "switchToSignUp": "Don't have an account? Create one",
+    "switchToSignIn": "Already have an account? Sign in"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "available": "Available"
+  },
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "Pet's name",
+    "age": "Age",
+    "ageUnit": "Age Unit",
+    "type": "Pet Type",
+    "types": {
+      "dog": "Dog",
+      "cat": "Cat",
+      "other": "Other"
+    },
+    "units": {
+      "days": "Days",
+      "months": "Months",
+      "years": "Years"
+    },
+    "friendly": "Friendly",
+    "isFriendly": "Is Friendly",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe the pet...",
+    "phone": "Contact Phone",
+    "phonePlaceholder": "Phone number",
+    "imageLabel": "Pet Image (Required)",
+    "uploadImage": "Upload Image",
+    "submit": "Add Pet",
+    "update": "Update Pet",
+    "success": "Pet added successfully!",
+    "uploadErrorTitle": "Upload Error",
+    "uploadErrorMsg": "Failed to upload image",
+    "missingFieldsTitle": "Missing Fields",
+    "missingFieldsMsg": "Please fill all required fields",
+    "invalidAgeTitle": "Invalid Age",
+    "invalidAgeMsg": "Please enter a valid numeric age",
+    "invalidPhoneTitle": "Invalid Phone",
+    "invalidPhoneMsg": "Please enter a valid phone number",
+    "submitErrorTitle": "Submission Error",
+    "submitErrorMsg": "Something went wrong. Please try again.",
+    "edit": "Edit Pet",
+    "loading": "Loading pet details...",
+    "confirmDeleteTitle": "Delete Pet",
+    "confirmDeleteMsg": "Are you sure you want to delete this pet? This action cannot be undone.",
+    "confirmDeleteWeb": "Are you sure you want to delete this pet?",
+    "delete": "Delete"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Stay updated with new adoptable pets",
+    "settings": "Notification Settings",
+    "newPetAlerts": "New Pet Alerts",
+    "description": "Get notified when new pets are added",
+    "webNotice": "Push notifications are not available on web. Please use our mobile app for push notifications.",
+    "announcements": "Announcements",
+    "noAnnouncements": "No announcements at this time",
+    "demo1Title": "New Puppies Available!",
+    "demo1Date": "Today",
+    "demo1Body": "We've just added five new puppies to our adoption list. Come check them out!",
+    "demo2Title": "Adoption Event This Weekend",
+    "demo2Date": "2 days ago",
+    "demo2Body": "Join us this Saturday for our special adoption event. We'll have special discounts on adoption fees!"
+  },
+  "notFound": {
+    "title": "Oops!",
+    "message": "This screen doesn't exist.",
+    "goHome": "Go to home screen!"
+  },
+  "search": {
+    "title": "Search Pets",
+    "subtitle": "Find your next companion",
+    "placeholder": "Search by pet name...",
+    "emptyTitle": "Search for pets by name",
+    "emptySubtext": "Use filters to narrow your search"
+  },
+  "petList": {
+    "loading": "Finding perfect companions...",
+    "emptyTitle": "No pets found",
+    "emptySubtitle": "Check back later for new adoptable pets!"
+  },
+  "filter": {
+    "button": "Filter",
+    "title": "Filter Pets",
+    "type": "Pet Type",
+    "types": {
+      "dog": "Dog",
+      "cat": "Cat",
+      "other": "Other"
+    },
+    "temperament": "Temperament",
+    "temperamentValues": {
+      "any": "Any",
+      "friendly": "Friendly",
+      "notFriendly": "Any (incl. not marked friendly)"
+    },
+    "reset": "Reset",
+    "apply": "Apply"
+  },
+  "favorites": {
+    "subtitle": "Pets you've saved",
+    "emptyTitle": "No favorites yet",
+    "emptySubtitle": "Save pets you like by tapping the heart icon"
+  }
+}

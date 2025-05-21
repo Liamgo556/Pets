@@ -1,32 +1,44 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Platform,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  I18nManager,
+} from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import AuthForm from '@/components/auth/AuthForm';
 import { LogOut, PlusCircle, Settings, RefreshCw } from 'lucide-react-native';
 import { useAdminPets } from '@/hooks/usePets';
 import { useRouter } from 'expo-router';
 import BannerAd from '@/components/layout/BannerAd';
+import { useTranslation } from 'react-i18next';
 
 export default function AccountScreen() {
-  const { user, isAdmin, signOut, loading: authLoading } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { pets, loading: petsLoading, refreshPets } = useAdminPets();
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { t, i18n } = useTranslation();
+  const isRTL = I18nManager.isRTL;
 
   const handleSignOut = async () => {
+    const confirmText = t('auth.signOutConfirm');
+    const confirmBtn = t('auth.signOut');
+
     if (Platform.OS === 'web') {
-      if (confirm('Are you sure you want to sign out?')) {
+      if (window.confirm(confirmText)) {
         await signOut();
       }
     } else {
-      Alert.alert(
-        'Sign Out',
-        'Are you sure you want to sign out?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign Out', style: 'destructive', onPress: signOut }
-        ]
-      );
+      Alert.alert(t('auth.signOut'), confirmText, [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: confirmBtn, style: 'destructive', onPress: signOut },
+      ]);
     }
   };
 
@@ -47,86 +59,97 @@ export default function AccountScreen() {
   if (!isAdmin) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Admin Access</Text>
-          <Text style={styles.subtitle}>Sign in to manage pets</Text>
-        </View>
-        
         <View style={styles.authContainer}>
           <AuthForm onSuccess={() => {}} />
         </View>
-        
-        {/* Banner Ads (web only) */}
+
         <BannerAd position="left" />
         <BannerAd position="right" />
-        <BannerAd position="top" />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Admin Dashboard</Text>
-        <Text style={styles.subtitle}>Manage pets for adoption</Text>
-      </View>
-      
       <View style={styles.adminContainer}>
-        <View style={styles.adminHeader}>
+        <View
+          style={[
+            styles.adminHeader,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
+        >
           <View>
-            <Text style={styles.welcomeText}>Welcome, Admin</Text>
+            <Text style={styles.welcomeText}>{t('admin.welcome')}</Text>
             <Text style={styles.emailText}>{user?.email}</Text>
           </View>
-          
+
           <View style={styles.adminActions}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.iconButton}
               onPress={handleRefresh}
               disabled={isRefreshing}
             >
-              <RefreshCw 
-                size={24} 
-                color="#6366F1" 
-                style={isRefreshing ? styles.spinningIcon : undefined} 
+              <RefreshCw
+                size={24}
+                color="#6366F1"
+                style={isRefreshing ? styles.spinningIcon : undefined}
               />
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.iconButton} onPress={handleSignOut}>
               <LogOut size={24} color="#EF4444" />
             </TouchableOpacity>
           </View>
         </View>
-        
-        <TouchableOpacity style={styles.addButton} onPress={handleAddNewPet}>
+
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
+          onPress={handleAddNewPet}
+        >
           <PlusCircle size={20} color="#FFFFFF" />
-          <Text style={styles.addButtonText}>Add New Pet</Text>
+          <Text
+            style={[
+              styles.addButtonText,
+              { marginLeft: isRTL ? 0 : 8, marginRight: isRTL ? 8 : 0 },
+            ]}
+          >
+            {t('admin.addPet')}
+          </Text>
         </TouchableOpacity>
-        
+
         <View style={styles.petsListContainer}>
           <Text style={styles.sectionTitle}>
-            {petsLoading ? 'Loading pets...' : `Manage Pets (${pets.length})`}
+            {petsLoading
+              ? t('admin.loadingPets')
+              : `${t('admin.managePets')} (${pets.length})`}
           </Text>
-          
+
           <ScrollView>
             {petsLoading ? (
-              <Text style={styles.loadingText}>Loading pets...</Text>
+              <Text style={styles.loadingText}>{t('admin.loadingPets')}</Text>
             ) : pets.length === 0 ? (
-              <Text style={styles.emptyText}>No pets added yet</Text>
+              <Text style={styles.emptyText}>{t('admin.noPets')}</Text>
             ) : (
-              pets.map(pet => (
-                <TouchableOpacity 
-                  key={pet.id} 
-                  style={styles.petItem}
+              pets.map((pet) => (
+                <TouchableOpacity
+                  key={pet.id}
+                  style={[
+                    styles.petItem,
+                    { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                  ]}
                   onPress={() => handleEditPet(pet.id)}
                 >
                   <View style={styles.petInfo}>
                     <Text style={styles.petName}>{pet.name}</Text>
                     <Text style={styles.petDetails}>
-                      {pet.age} {pet.age_unit} • {pet.type.charAt(0).toUpperCase() + pet.type.slice(1)}
-                      {pet.is_friendly ? ' • Friendly' : ''}
+                      {pet.age} {t(`form.units.${pet.age_unit}`)} •{' '}
+                      {t(`form.types.${pet.type}`)}
+                      {pet.is_friendly ? ` • ${t('form.friendly')}` : ''}
                     </Text>
                   </View>
-                  
                   <Settings size={20} color="#6B7280" />
                 </TouchableOpacity>
               ))
@@ -134,11 +157,9 @@ export default function AccountScreen() {
           </ScrollView>
         </View>
       </View>
-      
-      {/* Banner Ads (web only) */}
+
       <BannerAd position="left" />
       <BannerAd position="right" />
-      <BannerAd position="top" />
     </SafeAreaView>
   );
 }

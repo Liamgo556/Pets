@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import { Search } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import PetList from '@/components/pets/PetList';
@@ -7,8 +14,11 @@ import PetFilter, { FilterOptions } from '@/components/pets/PetFilter';
 import { Pet } from '@/components/pets/PetCard';
 import { useFavoritePets } from '@/hooks/usePets';
 import BannerAd from '@/components/layout/BannerAd';
+import { useTranslation } from 'react-i18next';
+import AppTextInput from '@/components/common/AppTextInput';
 
 export default function SearchScreen() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,29 +32,27 @@ export default function SearchScreen() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     try {
       setLoading(true);
       setSearched(true);
-      
+
       let query = supabase
         .from('pets')
         .select('*')
         .ilike('name', `%${searchQuery}%`);
-      
-      // Apply filters
+
       if (filters.type.length > 0) {
         query = query.in('type', filters.type);
       }
-      
+
       if (filters.isFriendly !== null) {
         query = query.eq('is_friendly', filters.isFriendly);
       }
-      
+
       const { data, error } = await query;
-      
       if (error) throw error;
-      
+
       setSearchResults(data as Pet[]);
     } catch (error) {
       console.error('Error searching pets:', error);
@@ -53,11 +61,9 @@ export default function SearchScreen() {
       setLoading(false);
     }
   };
-  
+
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
-    
-    // Re-search if we've already searched before
     if (searched) {
       handleSearch();
     }
@@ -65,34 +71,26 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Search Pets</Text>
-        <Text style={styles.subtitle}>Find your next companion</Text>
-      </View>
-      
       <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={20} color="#6B7280" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by pet name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-            returnKeyType="search"
-          />
-        </View>
-        
-        <View style={styles.filterContainer}>
-          <PetFilter onFilterChange={handleFilterChange} initialFilters={filters} />
-        </View>
+        <AppTextInput
+          style={styles.searchInput}
+          placeholder={t('search.placeholder')}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
+        />
       </View>
-      
+
+      <PetFilter onFilterChange={handleFilterChange} initialFilters={filters} />
+
       <View style={styles.contentContainer}>
         {!searched ? (
           <View style={styles.emptyStateContainer}>
-            <Text style={styles.emptyStateText}>Search for pets by name</Text>
-            <Text style={styles.emptyStateSubtext}>Use filters to narrow your search</Text>
+            <Text style={styles.emptyStateText}>{t('search.emptyTitle')}</Text>
+            <Text style={styles.emptyStateSubtext}>
+              {t('search.emptySubtext')}
+            </Text>
           </View>
         ) : (
           <PetList
@@ -103,11 +101,10 @@ export default function SearchScreen() {
           />
         )}
       </View>
-      
-      {/* Banner Ads (web only) */}
+
+      {/* Web ads */}
       <BannerAd position="left" />
       <BannerAd position="right" />
-      <BannerAd position="top" />
     </SafeAreaView>
   );
 }
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    // backgroundColor: '#F3F4F6',
     borderRadius: 8,
     paddingHorizontal: 12,
   },
@@ -158,9 +155,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
-  },
-  filterContainer: {
-    marginTop: 16,
   },
   contentContainer: {
     flex: 1,

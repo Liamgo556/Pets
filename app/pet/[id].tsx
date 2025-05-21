@@ -132,7 +132,6 @@ export default function PetDetailScreen() {
       {/* Banner Ads (web only) */}
       <BannerAd position="left" />
       <BannerAd position="right" />
-      <BannerAd position="top" />
     </SafeAreaView>
   );
 }

@@ -7,10 +7,11 @@ import {
   Image,
   Linking,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 
 type BannerAdProps = {
-  position: 'left' | 'right' | 'top';
+  position: 'left' | 'right';
   adContent?: {
     imageUrl: string;
     linkUrl: string;
@@ -19,10 +20,11 @@ type BannerAdProps = {
 };
 
 export default function BannerAd({ position, adContent }: BannerAdProps) {
-  // Only show ads on web
-  if (Platform.OS !== 'web') {
-    return null;
-  }
+  if (Platform.OS !== 'web') return null;
+
+  const { width } = useWindowDimensions();
+
+  if (width < 1024) return null;
 
   const handlePress = () => {
     if (adContent?.linkUrl) {
@@ -30,86 +32,61 @@ export default function BannerAd({ position, adContent }: BannerAdProps) {
     }
   };
 
-  // Placeholder ad if no content provided
-  const placeholderAd = {
+  const ad = adContent || {
     imageUrl:
       'https://images.pexels.com/photos/6568501/pexels-photo-6568501.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
     linkUrl: 'https://example.com',
     altText: 'Support pet adoption',
   };
 
-  const ad = adContent || placeholderAd;
-
-  // Different styles based on position
-  const containerStyle = [
-    styles.container,
-    position === 'left' && styles.leftContainer,
-    position === 'right' && styles.rightContainer,
-    position === 'top' && styles.topContainer,
-  ];
-
   return (
-    <View style={containerStyle}>
-      <View style={styles.adWrapper}>
-        <TouchableOpacity style={styles.adContent} onPress={handlePress}>
-          {/* <Image
-            source={{ uri: ad.imageUrl }}
-            style={styles.adImage}
-            accessibilityLabel={ad.altText}
-          /> */}
-          <Text style={styles.sponsoredLabel}>Sponsored</Text>
-        </TouchableOpacity>
-      </View>
+    <View
+      style={[
+        styles.container,
+        position === 'left' ? styles.left : styles.right,
+      ]}
+    >
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.8}
+        style={styles.adWrapper}
+      >
+        <Image
+          source={{ uri: ad.imageUrl }}
+          style={styles.adImage}
+          accessibilityLabel={ad.altText}
+        />
+        <Text style={styles.sponsoredLabel}>Sponsored</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    display: 'none',
-    ...Platform.select({
-      web: {
-        display: 'flex',
-      },
-    }),
-  },
-  leftContainer: {
     position: 'fixed',
+    top: '50%',
+    transform: [{ translateY: -150 }],
+    zIndex: 1000,
+    pointerEvents: 'box-none',
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  left: {
     left: 0,
-    top: 0,
-    bottom: 0,
-    // width: 160,
-    padding: 16,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingLeft: 8,
   },
-  rightContainer: {
-    position: 'fixed',
+  right: {
     right: 0,
-    top: 0,
-    bottom: 0,
-    // width: 160,
-    padding: 16,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topContainer: {
-    width: '100%',
-    height: 90,
-    padding: 8,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingRight: 8,
   },
   adWrapper: {
-    width: '100%',
+    pointerEvents: 'auto',
+    width: 160,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#F3F4F6',
-  },
-  adContent: {
     position: 'relative',
   },
   adImage: {

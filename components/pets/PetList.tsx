@@ -1,5 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, RefreshControl, Platform, ScrollView, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  Platform,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
 import PetCard, { Pet } from './PetCard';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -13,7 +23,7 @@ type PetListProps = {
 };
 
 const { width } = Dimensions.get('window');
-const GRID_MARGIN = width > 1200 ? 32 : 16;
+const BANNER_WIDTH = 160;
 
 export default function PetList({
   pets,
@@ -23,37 +33,42 @@ export default function PetList({
   onRefresh,
   isRefreshing = false,
 }: PetListProps) {
+  const { t } = useTranslation();
+
   if (isLoading && !isRefreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>Finding perfect companions...</Text>
+        <Text style={styles.loadingText}>{t('petList.loading')}</Text>
       </View>
     );
   }
 
   if (pets.length === 0) {
     return (
-      <Animated.View 
+      <Animated.View
         entering={FadeIn.duration(400)}
         style={styles.emptyContainer}
       >
-        <Text style={styles.emptyText}>No pets found</Text>
-        <Text style={styles.emptySubtext}>
-          Check back later for new adoptable pets!
-        </Text>
+        <Text style={styles.emptyText}>{t('petList.emptyTitle')}</Text>
+        <Text style={styles.emptySubtext}>{t('petList.emptySubtitle')}</Text>
       </Animated.View>
     );
   }
 
-  // On web, we'll use a ScrollView with a grid layout
+  const bannerPadding = BANNER_WIDTH + 12;
+
   if (Platform.OS === 'web') {
     return (
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
           styles.webGridContainer,
-          { paddingHorizontal: GRID_MARGIN }
+          {
+            paddingLeft: bannerPadding,
+            paddingRight: bannerPadding,
+            columnGap: 24,
+          },
         ]}
         refreshControl={
           onRefresh ? (
@@ -77,7 +92,6 @@ export default function PetList({
     );
   }
 
-  // On mobile, we'll use a ScrollView with a single column
   return (
     <ScrollView
       style={styles.container}
@@ -104,21 +118,17 @@ export default function PetList({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  mobileContainer: {
-    paddingVertical: 16,
-  },
+  container: { flex: 1 },
+  mobileContainer: { paddingVertical: 16 },
   webGridContainer: {
     paddingVertical: 24,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 24,
   },
   webGridItem: {
-    width: 'auto',
+    width: 360,
+    margin: 12,
   },
   loadingContainer: {
     flex: 1,

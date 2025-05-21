@@ -1,15 +1,18 @@
 /*
-  # Initial schema for PetPals Adoption Platform
+  # PetPals Adoption Platform – Secure Initial Schema (Admin-only enforcement)
 
-  1. New Tables
-    - `pets` - Stores all pet information for adoption
-    - `user_preferences` - Stores user notification preferences
-    - `user_push_tokens` - Stores device push notification tokens
-    - `announcements` - Stores system announcements
-  
-  2. Security
-    - Enable RLS on all tables
-    - Add policies for appropriate access control
+  Tables:
+    - pets
+    - user_preferences
+    - user_push_tokens
+    - announcements
+
+  Storage:
+    - pet-images bucket
+
+  RLS:
+    - Only admins can manage pets, images, announcements
+    - Authenticated users manage their own preferences and push tokens
 */
 
 -- Create pets table
@@ -57,33 +60,38 @@ CREATE TABLE IF NOT EXISTS announcements (
   updated_at timestamptz DEFAULT now()
 );
 
--- Enable Row Level Security (RLS)
+-- Create admins table
+CREATE TABLE IF NOT EXISTS admins (
+  user_id uuid primary key references auth.users(id)
+);
+
+-- Enable RLS on all tables
 ALTER TABLE pets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_push_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for pets
+-- ✅ Pets RLS
 CREATE POLICY "Anyone can view pets" 
   ON pets FOR SELECT 
   USING (true);
 
-CREATE POLICY "Authenticated users can insert pets" 
+CREATE POLICY "Only admins can insert pets" 
   ON pets FOR INSERT 
   TO authenticated 
-  WITH CHECK (true);
+  WITH CHECK (auth.jwt() ->> 'role' = 'admin');
 
-CREATE POLICY "Authenticated users can update pets" 
+CREATE POLICY "Only admins can update pets" 
   ON pets FOR UPDATE 
   TO authenticated 
-  USING (true);
+  USING (auth.jwt() ->> 'role' = 'admin');
 
-CREATE POLICY "Authenticated users can delete pets" 
+CREATE POLICY "Only admins can delete pets" 
   ON pets FOR DELETE 
   TO authenticated 
-  USING (true);
+  USING (auth.jwt() ->> 'role' = 'admin');
 
--- RLS Policies for user_preferences
+-- ✅ User Preferences RLS
 CREATE POLICY "Users can view their own preferences" 
   ON user_preferences FOR SELECT 
   TO authenticated 
@@ -99,7 +107,7 @@ CREATE POLICY "Users can update their own preferences"
   TO authenticated 
   USING (auth.uid() = user_id);
 
--- RLS Policies for user_push_tokens
+-- ✅ User Push Tokens RLS
 CREATE POLICY "Users can view their own push tokens" 
   ON user_push_tokens FOR SELECT 
   TO authenticated 
@@ -120,43 +128,56 @@ CREATE POLICY "Users can delete their own push tokens"
   TO authenticated 
   USING (auth.uid() = user_id);
 
--- RLS Policies for announcements
+-- ✅ Announcements RLS
 CREATE POLICY "Anyone can view announcements" 
   ON announcements FOR SELECT 
   USING (true);
 
-CREATE POLICY "Authenticated users can manage announcements" 
+CREATE POLICY "Only admins can manage announcements" 
   ON announcements FOR ALL 
   TO authenticated 
-  USING (true);
+  USING (auth.jwt() ->> 'role' = 'admin')
+  WITH CHECK (auth.jwt() ->> 'role' = 'admin');
 
--- Create storage buckets for pet images
-INSERT INTO storage.buckets (id, name, public) VALUES ('pet-images', 'pet-images', true);
+-- ✅ Create public bucket for pet images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('pet-images', 'pet-images', true)
+ON CONFLICT (id) DO NOTHING;
 
--- Set up storage policy to allow public read access to pet images
+-- ✅ Storage Policies for 'pet-images'
+-- Public read-only access
 CREATE POLICY "Public can read pet images"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'pet-images');
 
--- Allow authenticated users to upload pet images
-CREATE POLICY "Authenticated users can upload pet images"
+-- Admin-only upload
+CREATE POLICY "Only admins can upload pet images"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'pet-images');
+  WITH CHECK (
+    bucket_id = 'pet-images' AND
+    auth.jwt() ->> 'role' = 'admin'
+  );
 
--- Allow authenticated users to update pet images
-CREATE POLICY "Authenticated users can update pet images"
+-- Admin-only update
+CREATE POLICY "Only admins can update pet images"
   ON storage.objects FOR UPDATE
   TO authenticated
-  USING (bucket_id = 'pet-images');
+  USING (
+    bucket_id = 'pet-images' AND
+    auth.jwt() ->> 'role' = 'admin'
+  );
 
--- Allow authenticated users to delete pet images
-CREATE POLICY "Authenticated users can delete pet images"
+-- Admin-only delete
+CREATE POLICY "Only admins can delete pet images"
   ON storage.objects FOR DELETE
   TO authenticated
-  USING (bucket_id = 'pet-images');
+  USING (
+    bucket_id = 'pet-images' AND
+    auth.jwt() ->> 'role' = 'admin'
+  );
 
--- Create function to update updated_at timestamp
+-- ✅ Timestamp triggers
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -165,7 +186,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create triggers to automatically update updated_at columns
+-- Triggers on relevant tables
 CREATE TRIGGER set_timestamp_pets
 BEFORE UPDATE ON pets
 FOR EACH ROW

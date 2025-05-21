@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -10,11 +9,17 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { Pet } from '@/components/pets/PetCard';
-import { Camera, Upload, X } from 'lucide-react-native';
+import { Camera, X } from 'lucide-react-native';
+import Toast from 'react-native-toast-message';
+import { useTranslation } from 'react-i18next';
+import AppTextInput from '@/components/common/AppTextInput';
+import i18n from '@/lib/i18n';
+import { rtlFlip } from '../../utils/layout';
 
 type PetFormProps = {
   pet?: Pet;
@@ -23,16 +28,20 @@ type PetFormProps = {
 };
 
 export default function PetForm({ pet, onSubmit, isLoading }: PetFormProps) {
+  const { t } = useTranslation();
+
   const [name, setName] = useState(pet?.name || '');
-  const [age, setAge] = useState(pet?.age.toString() || '');
-  const [ageUnit, setAgeUnit] = useState<'days' | 'months' | 'years'>(pet?.age_unit || 'months');
+  const [age, setAge] = useState(pet?.age ? pet.age.toString() : '');
+  const [ageUnit, setAgeUnit] = useState<'days' | 'months' | 'years'>(
+    pet?.age_unit || 'months'
+  );
   const [type, setType] = useState<'dog' | 'cat' | 'other'>(pet?.type || 'dog');
   const [isFriendly, setIsFriendly] = useState(pet?.is_friendly || false);
   const [description, setDescription] = useState(pet?.description || '');
   const [contactPhone, setContactPhone] = useState(pet?.contact_phone || '');
   const [imageUrl, setImageUrl] = useState(pet?.image_url || '');
   const [uploadLoading, setUploadLoading] = useState(false);
-  
+
   const handleImagePicker = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -40,66 +49,65 @@ export default function PetForm({ pet, onSubmit, isLoading }: PetFormProps) {
       aspect: [4, 3],
       quality: 0.8,
     });
-    
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+
+    if (!result.canceled && result.assets?.length > 0) {
       await uploadImage(result.assets[0].uri);
     }
   };
-  
+
   const uploadImage = async (uri: string) => {
     try {
       setUploadLoading(true);
-      
-      // For web compatibility
-      const formData = new FormData();
-      const filename = uri.split('/').pop() || '';
-      const fileType = filename.split('.').pop() || '';
-      
-      const file = {
-        uri,
-        name: filename,
-        type: `image/${fileType}`,
-      } as any;
-      
-      formData.append('file', file);
-      
-      // Get file extension
-      const fileExt = uri.split('.').pop();
-      // Generate unique filename
-      const filePath = `${Date.now()}.${fileExt}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const ext = uri.split('.').pop() || 'jpg';
+      const filePath = `${Date.now()}.${ext}`;
+
+      const { error } = await supabase.storage
         .from('pet-images')
-        .upload(filePath, formData);
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Get the public URL
-      const { data: urlData } = supabase.storage
+        .upload(filePath, blob, {
+          contentType: blob.type || 'image/jpeg',
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
         .from('pet-images')
         .getPublicUrl(filePath);
-      
-      setImageUrl(urlData.publicUrl);
-    } catch (error) {
-      console.error('Error uploading image:', error);
+      setImageUrl(data.publicUrl);
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      Alert.alert(
+        t('form.uploadErrorTitle'),
+        err.message || t('form.uploadErrorMsg')
+      );
     } finally {
       setUploadLoading(false);
     }
   };
-  
+
   const handleSubmit = async () => {
-    // Validate form
+    const parsedAge = parseInt(age, 10);
+
     if (!name || !age || !description || !contactPhone || !imageUrl) {
-      alert('Please fill all required fields');
+      Alert.alert(t('form.missingFieldsTitle'), t('form.missingFieldsMsg'));
       return;
     }
-    
+
+    if (isNaN(parsedAge)) {
+      Alert.alert(t('form.invalidAgeTitle'), t('form.invalidAgeMsg'));
+      return;
+    }
+
+    if (!/^\+?\d{7,15}$/.test(contactPhone)) {
+      Alert.alert(t('form.invalidPhoneTitle'), t('form.invalidPhoneMsg'));
+      return;
+    }
+
     const formData = {
       name,
-      age: parseInt(age, 10),
+      age: parsedAge,
       age_unit: ageUnit,
       type,
       is_friendly: isFriendly,
@@ -107,165 +115,185 @@ export default function PetForm({ pet, onSubmit, isLoading }: PetFormProps) {
       contact_phone: contactPhone,
       image_url: imageUrl,
     };
-    
+
     try {
       await onSubmit(formData);
+      Toast.show({
+        type: 'success',
+        text1: t('form.success'),
+      });
     } catch (error) {
       console.error('Error submitting form:', error);
+      Alert.alert(t('form.submitErrorTitle'), t('form.submitErrorMsg'));
     }
   };
-  
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Pet Image (Required)</Text>
-        
-        {imageUrl ? (
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.innerContainer}>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('form.imageLabel')}</Text>
+          {imageUrl ? (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => setImageUrl('')}
+              >
+                <X size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
             <TouchableOpacity
-              style={styles.removeImageButton}
-              onPress={() => setImageUrl('')}
+              style={styles.imagePicker}
+              onPress={handleImagePicker}
             >
-              <X size={24} color="#FFFFFF" />
+              {uploadLoading ? (
+                <ActivityIndicator size="small" color="#6366F1" />
+              ) : (
+                <>
+                  <Camera size={24} color="#6366F1" />
+                  <Text style={styles.imagePickerText}>
+                    {t('form.uploadImage')}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.imagePicker} onPress={handleImagePicker}>
-            {uploadLoading ? (
-              <ActivityIndicator size="small" color="#6366F1" />
-            ) : (
-              <>
-                <Camera size={24} color="#6366F1" />
-                <Text style={styles.imagePickerText}>Upload Image</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Name (Required)</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Pet's name"
-        />
-      </View>
-      
-      <View style={styles.formRow}>
-        <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-          <Text style={styles.label}>Age (Required)</Text>
-          <TextInput
+          )}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('form.name')}</Text>
+          <AppTextInput
             style={styles.input}
-            value={age}
-            onChangeText={text => setAge(text.replace(/[^0-9]/g, ''))}
-            keyboardType="numeric"
-            placeholder="Age"
+            value={name}
+            onChangeText={setName}
+            placeholder={t('form.namePlaceholder')}
           />
         </View>
-        
-        <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-          <Text style={styles.label}>Age Unit</Text>
+
+        <View style={styles.formRow}>
+          <View style={[styles.formGroup, { flex: 1 }]}>
+            <Text style={styles.label}>{t('form.age')}</Text>
+            <AppTextInput
+              style={styles.input}
+              value={age}
+              onChangeText={(text: string) =>
+                setAge(text.replace(/[^0-9]/g, ''))
+              }
+              keyboardType="numeric"
+              placeholder={t('form.age')}
+            />
+          </View>
+          <View
+            style={[
+              styles.formGroup,
+              { flex: 1 },
+              rtlFlip('marginLeft', 'marginRight', 8),
+            ]}
+          >
+            <Text style={styles.label}>{t('form.ageUnit')}</Text>
+            <View style={styles.buttonGroupContainer}>
+              {(['days', 'months', 'years'] as const).map((unit) => (
+                <TouchableOpacity
+                  key={unit}
+                  style={[
+                    styles.buttonGroupItem,
+                    ageUnit === unit && styles.buttonGroupItemActive,
+                  ]}
+                  onPress={() => setAgeUnit(unit)}
+                >
+                  <Text
+                    style={[
+                      styles.buttonGroupText,
+                      ageUnit === unit && styles.buttonGroupTextActive,
+                    ]}
+                  >
+                    {t(`form.units.${unit}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('form.type')}</Text>
           <View style={styles.buttonGroupContainer}>
-            {(['days', 'months', 'years'] as const).map(unit => (
+            {(['dog', 'cat', 'other'] as const).map((petType) => (
               <TouchableOpacity
-                key={unit}
+                key={petType}
                 style={[
                   styles.buttonGroupItem,
-                  ageUnit === unit && styles.buttonGroupItemActive,
+                  type === petType && styles.buttonGroupItemActive,
                 ]}
-                onPress={() => setAgeUnit(unit)}
+                onPress={() => setType(petType)}
               >
                 <Text
                   style={[
                     styles.buttonGroupText,
-                    ageUnit === unit && styles.buttonGroupTextActive,
+                    type === petType && styles.buttonGroupTextActive,
                   ]}
                 >
-                  {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                  {t(`form.types.${petType}`)}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Pet Type</Text>
-        <View style={styles.buttonGroupContainer}>
-          {(['dog', 'cat', 'other'] as const).map(petType => (
-            <TouchableOpacity
-              key={petType}
-              style={[
-                styles.buttonGroupItem,
-                type === petType && styles.buttonGroupItemActive,
-              ]}
-              onPress={() => setType(petType)}
-            >
-              <Text
-                style={[
-                  styles.buttonGroupText,
-                  type === petType && styles.buttonGroupTextActive,
-                ]}
-              >
-                {petType.charAt(0).toUpperCase() + petType.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+        <View style={styles.formGroup}>
+          <View style={styles.switchContainer}>
+            <Text style={styles.label}>{t('form.isFriendly')}</Text>
+            <Switch
+              value={isFriendly}
+              onValueChange={setIsFriendly}
+              trackColor={{ false: '#D1D5DB', true: '#6366F1' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <View style={styles.switchContainer}>
-          <Text style={styles.label}>Is Friendly</Text>
-          <Switch
-            value={isFriendly}
-            onValueChange={setIsFriendly}
-            trackColor={{ false: '#D1D5DB', true: '#6366F1' }}
-            thumbColor="#FFFFFF"
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('form.description')}</Text>
+          <AppTextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder={t('form.descriptionPlaceholder')}
+            multiline
+            numberOfLines={Platform.OS === 'ios' ? 0 : 4}
           />
         </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('form.phone')}</Text>
+          <AppTextInput
+            style={styles.input}
+            value={contactPhone}
+            onChangeText={setContactPhone}
+            placeholder={t('form.phonePlaceholder')}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            (isLoading || uploadLoading) && styles.disabledButton,
+          ]}
+          onPress={handleSubmit}
+          disabled={isLoading || uploadLoading}
+        >
+          {isLoading || uploadLoading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              {pet ? t('form.update') : t('form.submit')}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Description (Required)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Describe the pet..."
-          multiline
-          numberOfLines={Platform.OS === 'ios' ? 0 : 4}
-          textAlignVertical="top"
-        />
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Contact Phone (Required)</Text>
-        <TextInput
-          style={styles.input}
-          value={contactPhone}
-          onChangeText={setContactPhone}
-          placeholder="Phone number"
-          keyboardType="phone-pad"
-        />
-      </View>
-      
-      <TouchableOpacity
-        style={[styles.submitButton, isLoading && styles.disabledButton]}
-        onPress={handleSubmit}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
-        ) : (
-          <Text style={styles.submitButtonText}>
-            {pet ? 'Update Pet' : 'Add Pet'}
-          </Text>
-        )}
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -273,6 +301,11 @@ export default function PetForm({ pet, onSubmit, isLoading }: PetFormProps) {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    alignItems: 'center',
+  },
+  innerContainer: {
+    width: '100%',
+    maxWidth: 500,
   },
   formGroup: {
     marginBottom: 16,
