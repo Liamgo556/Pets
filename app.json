@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PetPals Adoption",
-    "slug": "petpals-adoption",
+    "name": "Picapet",
+    "slug": "picapet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -17,7 +17,7 @@
     "web": {
       "bundler": "metro",
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
