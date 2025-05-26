@@ -39,9 +39,9 @@ type PetCardProps = {
   index?: number;
 };
 
-const { width } = Dimensions.get('window');
+// const { width } = Dimensions.get('window');
 const CARD_MARGIN = 16;
-const CARD_WIDTH = Platform.OS === 'web' ? 380 : width - CARD_MARGIN * 2;
+// const CARD_WIDTH = Platform.OS === 'web' ? 380 : width - CARD_MARGIN * 2;
 
 export default function PetCard({
   pet,
@@ -50,7 +50,7 @@ export default function PetCard({
   index = 0,
 }: PetCardProps) {
   const router = useRouter();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const scale = useSharedValue(0.8);
   const opacity = useSharedValue(0);
 
@@ -155,7 +155,7 @@ export default function PetCard({
 
 const styles = StyleSheet.create({
   container: {
-    width: CARD_WIDTH,
+    // width: CARD_WIDTH,
     marginHorizontal: CARD_MARGIN,
     marginBottom: 20,
   },

@@ -28,6 +28,7 @@ export function useAuth() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       const currentUser = session?.user ?? null;
       setSession(session);
       setUser(currentUser);
@@ -42,32 +43,55 @@ export function useAuth() {
 
     initialize();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user ?? null;
-        setSession(session);
-        setUser(currentUser);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setSession(session);
+      setUser(currentUser);
 
-        if (currentUser) {
-          const admin = await checkAdminStatus(currentUser.id);
-          setIsAdmin(admin);
-        } else {
-          setIsAdmin(false);
-        }
-
-        setLoading(false);
+      if (currentUser) {
+        const admin = await checkAdminStatus(currentUser.id);
+        setIsAdmin(admin);
+      } else {
+        setIsAdmin(false);
       }
-    );
+
+      setLoading(false);
+    });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
+
+  const signInWithGoogle = async () => {
+    const redirectTo =
+      typeof window !== 'undefined'
+        ? window.location.origin // for web
+        : 'exp://localhost:8081'; // or your actual Expo app URI scheme
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) {
+      console.error('Error signing in with Google:', error.message);
+    }
+  };
 
   const signOut = async () => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
+
+      if (typeof window !== 'undefined') {
+        // 🔁 Replace current URL with homepage
+        window.location.replace('/');
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     } finally {
@@ -80,6 +104,7 @@ export function useAuth() {
     user,
     isAdmin,
     loading,
+    signInWithGoogle,
     signOut,
   };
 }

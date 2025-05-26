@@ -22,7 +22,8 @@
     "signOut": "Sign Out",
     "signOutConfirm": "Are you sure you want to sign out?",
     "signIn": "Sign In",
-    "signInSubtitle": "Sign in to access admin features",
+    "signInWithGoogle": "Sign in with Google",
+    "signInSubtitle": "Sign in to perform actions",
     "createAccount": "Create Account",
     "createAccountSubtitle": "Create an admin account to manage pets",
     "email": "Email",
@@ -36,7 +37,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "available": "Available"
+    "available": "Available",
+    "sponsored": "Sponsored"
   },
   "form": {
     "name": "Name",

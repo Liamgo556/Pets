@@ -67,7 +67,6 @@ export default function PetList({
           {
             paddingLeft: bannerPadding,
             paddingRight: bannerPadding,
-            columnGap: 24,
           },
         ]}
         refreshControl={
@@ -127,8 +126,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   webGridItem: {
-    width: 360,
+    width: '30%',
+    minWidth: 260,
+    maxWidth: 360,
     margin: 12,
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,

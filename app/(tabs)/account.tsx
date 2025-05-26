@@ -13,17 +13,17 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import AuthForm from '@/components/auth/AuthForm';
 import { LogOut, PlusCircle, Settings, RefreshCw } from 'lucide-react-native';
-import { useAdminPets } from '@/hooks/usePets';
+import { usePets } from '@/hooks/usePets';
 import { useRouter } from 'expo-router';
 import BannerAd from '@/components/layout/BannerAd';
 import { useTranslation } from 'react-i18next';
 
 export default function AccountScreen() {
   const { user, isAdmin, signOut } = useAuth();
-  const { pets, loading: petsLoading, refreshPets } = useAdminPets();
+  const { pets, loading: petsLoading, refreshPets } = usePets();
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const isRTL = I18nManager.isRTL;
 
   const handleSignOut = async () => {
@@ -56,15 +56,37 @@ export default function AccountScreen() {
     setIsRefreshing(false);
   };
 
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.authContainer}>
+          <AuthForm />
+        </View>
+        <BannerAd position="left" />
+        <BannerAd position="right" />
+        <BannerAd position="bottom" />
+      </SafeAreaView>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authContainer}>
-          <AuthForm onSuccess={() => {}} />
+          <Text style={styles.welcomeText}>
+            {t('auth.loggedInAs', 'You are logged in as:')} {user.email}
+          </Text>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <LogOut size={20} color="#EF4444" />
+            <Text style={styles.signOutText}>{t('auth.signOut')}</Text>
+          </TouchableOpacity>
         </View>
-
         <BannerAd position="left" />
         <BannerAd position="right" />
+        <BannerAd position="bottom" />
       </SafeAreaView>
     );
   }
@@ -160,6 +182,7 @@ export default function AccountScreen() {
 
       <BannerAd position="left" />
       <BannerAd position="right" />
+      <BannerAd position="bottom" />
     </SafeAreaView>
   );
 }
@@ -169,30 +192,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 16,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
-    color: '#1F2937',
-  },
-  subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 4,
-  },
   authContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+  },
+  signOutText: {
+    fontSize: 16,
+    color: '#B91C1C',
+    marginLeft: 8,
+    fontFamily: 'Inter-Medium',
   },
   adminContainer: {
     flex: 1,
@@ -202,6 +221,7 @@ const styles = StyleSheet.create({
         maxWidth: 1200,
         alignSelf: 'center',
         width: '100%',
+        paddingBottom: 100,
       },
     }),
   },

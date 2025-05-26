@@ -36,7 +36,7 @@ export default function PetFilter({
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === 'rtl';
+  const isRTL = I18nManager.isRTL;
 
   const toggleFilter = () => setIsOpen(!isOpen);
 

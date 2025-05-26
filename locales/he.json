@@ -22,7 +22,8 @@
     "signOut": "התנתק",
     "signOutConfirm": "האם אתה בטוח שברצונך להתנתק?",
     "signIn": "התחבר",
-    "signInSubtitle": "התחבר כדי לגשת לתכונות ניהול",
+    "signInWithGoogle": "התחבר עם גוגל",
+    "signInSubtitle": "התחבר כדי לבצע פעולות",
     "createAccount": "צור חשבון",
     "createAccountSubtitle": "צור חשבון ניהול לניהול חיות מחמד",
     "email": "אימייל",
@@ -36,7 +37,8 @@
   },
   "common": {
     "cancel": "ביטול",
-    "available": "זמין"
+    "available": "זמין",
+    "sponsored": "ממומן"
   },
   "form": {
     "name": "שם",

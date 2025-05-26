@@ -65,11 +65,19 @@ CREATE TABLE IF NOT EXISTS admins (
   user_id uuid primary key references auth.users(id)
 );
 
+create table IF NOT EXISTS user_favorites (
+  user_id uuid references auth.users on delete cascade,
+  pet_id uuid references pets(id) on delete cascade,
+  primary key (user_id, pet_id)
+);
+
 -- Enable RLS on all tables
 ALTER TABLE pets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_push_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
+
 
 -- ✅ Pets RLS
 CREATE POLICY "Anyone can view pets" 
@@ -138,6 +146,11 @@ CREATE POLICY "Only admins can manage announcements"
   TO authenticated 
   USING (auth.jwt() ->> 'role' = 'admin')
   WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+
+CREATE POLICY "User can access their own favorites" 
+ON user_favorites FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ✅ Create public bucket for pet images
 INSERT INTO storage.buckets (id, name, public)

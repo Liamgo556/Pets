@@ -105,6 +105,7 @@ export default function SearchScreen() {
       {/* Web ads */}
       <BannerAd position="left" />
       <BannerAd position="right" />
+      <BannerAd position="bottom" />
     </SafeAreaView>
   );
 }
@@ -142,7 +143,6 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    // backgroundColor: '#F3F4F6',
     borderRadius: 8,
     paddingHorizontal: 12,
   },
@@ -161,9 +161,9 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         paddingHorizontal: 16,
-        maxWidth: 1200,
         alignSelf: 'center',
         width: '100%',
+        paddingBottom: 100,
       },
     }),
   },

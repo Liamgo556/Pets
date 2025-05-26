@@ -17,7 +17,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Bell } from 'lucide-react-native';
-import BannerAd from '@/components/layout/BannerAd';
+// import BannerAd from '@/components/layout/BannerAd';
 import { useTranslation } from 'react-i18next';
 
 export default function NotificationsScreen() {
@@ -178,8 +178,8 @@ export default function NotificationsScreen() {
         </View>
       </ScrollView>
 
-      <BannerAd position="left" />
-      <BannerAd position="right" />
+      {/* <BannerAd position="left" />
+      <BannerAd position="right" /> */}
     </SafeAreaView>
   );
 }

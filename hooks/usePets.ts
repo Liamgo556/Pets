@@ -1,38 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Pet } from '@/components/pets/PetCard';
 import { FilterOptions } from '@/components/pets/PetFilter';
-import { Platform } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { useAuth } from './useAuth';
 
-// Storage adapter for handling favorites across platforms
-const storage = {
-  async setItem(key: string, value: string) {
-    try {
-      if (Platform.OS === 'web') {
-        localStorage.setItem(key, value);
-      } else {
-        await SecureStore.setItemAsync(key, value);
-      }
-    } catch (e) {
-      console.error('Error saving to storage:', e);
-    }
-  },
-  
-  async getItem(key: string): Promise<string | null> {
-    try {
-      if (Platform.OS === 'web') {
-        return localStorage.getItem(key);
-      } else {
-        return await SecureStore.getItemAsync(key);
-      }
-    } catch (e) {
-      console.error('Error reading from storage:', e);
-      return null;
-    }
-  }
-};
-
+// 🔍 usePets: Fetch pets with optional filters
 export function usePets(options?: FilterOptions) {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,36 +16,20 @@ export function usePets(options?: FilterOptions) {
       setLoading(true);
       let query = supabase.from('pets').select('*');
 
-      // Apply filters
       if (options) {
-        // Filter by pet type
-        if (options.type && options.type.length > 0) {
-          query = query.in('type', options.type);
-        }
-
-        // Filter by friendly status
-        if (options.isFriendly !== null) {
+        if (options.type?.length) query = query.in('type', options.type);
+        if (options.isFriendly !== null)
           query = query.eq('is_friendly', options.isFriendly);
-        }
-
-        // Filter by age range
-        if (options.ageRange[0] !== null) {
+        if (options.ageRange[0] !== null)
           query = query.gte('age', options.ageRange[0]);
-        }
-        if (options.ageRange[1] !== null) {
+        if (options.ageRange[1] !== null)
           query = query.lte('age', options.ageRange[1]);
-        }
       }
 
-      // Order by newest first
       query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       setPets(data as Pet[]);
     } catch (err: any) {
       console.error('Error fetching pets:', err);
@@ -83,12 +39,10 @@ export function usePets(options?: FilterOptions) {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchPets();
-  }, [options]);
+  }, [JSON.stringify(options)]);
 
-  // Function to refresh pets
   const refreshPets = async () => {
     setRefreshing(true);
     await fetchPets();
@@ -98,154 +52,66 @@ export function usePets(options?: FilterOptions) {
   return { pets, loading, error, refreshPets, refreshing };
 }
 
+// ❤️ useFavoritePets: Handle user favorite pets stored in the DB
 export function useFavoritePets() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
 
-  const toggleFavorite = (petId: string) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(petId)) {
-        newFavorites.delete(petId);
+  const loadFavorites = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('user_favorites')
+      .select('pet_id')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error loading favorites:', error.message);
+      return;
+    }
+
+    const ids = data.map((row) => row.pet_id);
+    setFavorites(new Set(ids));
+  }, [user]);
+
+  const toggleFavorite = useCallback(
+    async (petId: string) => {
+      if (!user) return;
+
+      const isFav = favorites.has(petId);
+      const updated = new Set(favorites);
+
+      if (isFav) {
+        const { error } = await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('pet_id', petId);
+        if (error) {
+          console.error('Error removing favorite:', error.message);
+          return;
+        }
+        updated.delete(petId);
       } else {
-        newFavorites.add(petId);
+        const { error } = await supabase
+          .from('user_favorites')
+          .insert([{ user_id: user.id, pet_id: petId }]);
+        if (error) {
+          console.error('Error adding favorite:', error.message);
+          return;
+        }
+        updated.add(petId);
       }
-      // Save to storage
-      saveFavorites(newFavorites);
-      return newFavorites;
-    });
-  };
 
-  // Load favorites from storage on init
+      setFavorites(updated);
+    },
+    [user, favorites]
+  );
+
   useEffect(() => {
-    loadFavorites();
-  }, []);
-
-  const saveFavorites = async (favs: Set<string>) => {
-    try {
-      const favsArray = Array.from(favs);
-      await storage.setItem('petpals-favorites', JSON.stringify(favsArray));
-    } catch (e) {
-      console.error('Error saving favorites:', e);
-    }
-  };
-
-  const loadFavorites = async () => {
-    try {
-      const savedFavs = await storage.getItem('petpals-favorites');
-      if (savedFavs) {
-        const favsArray = JSON.parse(savedFavs);
-        setFavorites(new Set(favsArray));
-      }
-    } catch (e) {
-      console.error('Error loading favorites:', e);
-    }
-  };
+    if (user) loadFavorites();
+    else setFavorites(new Set());
+  }, [user, loadFavorites]);
 
   return { favorites, toggleFavorite };
-}
-
-export function useAdminPets() {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchPets = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('pets')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setPets(data as Pet[]);
-    } catch (err: any) {
-      console.error('Error fetching pets for admin:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addPet = async (pet: Omit<Pet, 'id' | 'created_at'>) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('pets')
-        .insert([pet])
-        .select();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Refresh pet list
-      await fetchPets();
-      return data;
-    } catch (err: any) {
-      console.error('Error adding pet:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePet = async (id: string, pet: Omit<Pet, 'id' | 'created_at'>) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('pets')
-        .update(pet)
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Refresh pet list
-      await fetchPets();
-      return data;
-    } catch (err: any) {
-      console.error('Error updating pet:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deletePet = async (id: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('pets')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Refresh pet list
-      await fetchPets();
-    } catch (err: any) {
-      console.error('Error deleting pet:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Initial fetch
-  useEffect(() => {
-    fetchPets();
-  }, []);
-
-  return { pets, loading, error, addPet, updatePet, deletePet, refreshPets: fetchPets };
 }

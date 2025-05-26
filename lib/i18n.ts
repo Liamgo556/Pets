@@ -14,36 +14,41 @@ const resources = {
   he: { translation: he },
 };
 
+// Make sure this is only called once and before any usage of i18n
 export const initI18n = async () => {
   let languageTag = fallback.languageTag;
   let isRTL = fallback.isRTL;
 
-  const storedLang = await AsyncStorage.getItem('appLanguage');
-  if (storedLang === 'he' || storedLang === 'en') {
-    languageTag = storedLang;
-    isRTL = storedLang === 'he';
-  } else {
-    const locales = RNLocalize.getLocales();
-    if (locales.length > 0) {
-      const best = locales[0].languageTag;
-      languageTag = best.startsWith('he') ? 'he' : 'en';
-      isRTL = languageTag === 'he';
+  try {
+    const storedLang = await AsyncStorage.getItem('appLanguage');
+    if (storedLang === 'he' || storedLang === 'en') {
+      languageTag = storedLang;
+      isRTL = storedLang === 'he';
+    } else {
+      const locales = RNLocalize.getLocales();
+      if (locales.length > 0) {
+        const best = locales[0].languageTag;
+        languageTag = best.startsWith('he') ? 'he' : 'en';
+        isRTL = languageTag === 'he';
+      }
     }
+
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(isRTL);
+
+    if (!i18n.isInitialized) {
+      await i18n.use(initReactI18next).init({
+        lng: languageTag,
+        fallbackLng: 'he',
+        resources,
+        interpolation: {
+          escapeValue: false,
+        },
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to initialize i18n:', err);
   }
-
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(isRTL);
-
-  await i18n.use(initReactI18next).init({
-    lng: languageTag,
-    fallbackLng: 'he',
-    resources,
-    interpolation: {
-      escapeValue: false,
-    },
-  });
-
-  return i18n;
 };
 
 export default i18n;

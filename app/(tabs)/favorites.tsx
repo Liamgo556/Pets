@@ -50,6 +50,7 @@ export default function FavoritesScreen() {
 
       <BannerAd position="left" />
       <BannerAd position="right" />
+      <BannerAd position="bottom" />
     </SafeAreaView>
   );
 }
@@ -58,36 +59,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 16,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
-    color: '#1F2937',
-  },
-  subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 4,
+    position: 'relative',
+    zIndex: 0,
   },
   contentContainer: {
     flex: 1,
     ...Platform.select({
       web: {
         paddingHorizontal: 16,
-        maxWidth: 1200,
         alignSelf: 'center',
         width: '100%',
+        paddingBottom: 100,
       },
     }),
+  },
+  rtlDirection: {
+    flexDirection: 'row-reverse',
   },
   emptyStateContainer: {
     flex: 1,

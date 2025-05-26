@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { supabase } from '@/lib/supabase';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View, Text, StyleSheet, I18nManager } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { View, Text, StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 import '../lib/i18n';
 import i18n, { initI18n } from '../lib/i18n';
@@ -12,11 +13,40 @@ export default function RootLayout() {
   const isRTL = i18n.language === 'he';
 
   useEffect(() => {
-    const load = async () => {
+    const init = async () => {
       await initI18n();
+
+      // Clean URL hash right away for visual tidiness
+      if (
+        typeof window !== 'undefined' &&
+        window.location.hash.includes('access_token')
+      ) {
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (error) console.error('Failed to set session:', error.message);
+        }
+
+        // ✅ Immediately remove the hash for clean URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }
+
       setReady(true);
     };
-    load();
+
+    init();
   }, []);
 
   if (!ready) {
@@ -31,10 +61,7 @@ export default function RootLayout() {
     <GestureHandlerRootView
       style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}
     >
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
       <Toast />
       <StatusBar style="auto" />
     </GestureHandlerRootView>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Platform,
   SafeAreaView,
@@ -11,7 +10,6 @@ import PetList from '@/components/pets/PetList';
 import PetFilter, { FilterOptions } from '@/components/pets/PetFilter';
 import { usePets, useFavoritePets } from '@/hooks/usePets';
 import BannerAd from '@/components/layout/BannerAd';
-import { useTranslation } from 'react-i18next';
 
 const defaultFilters: FilterOptions = {
   type: [],
@@ -23,7 +21,6 @@ export default function BrowseScreen() {
   const [filters, setFilters] = useState<FilterOptions>(defaultFilters);
   const { pets, loading, refreshPets, refreshing } = usePets(filters);
   const { favorites, toggleFavorite } = useFavoritePets();
-  const { t } = useTranslation();
   const isRTL = I18nManager.isRTL;
 
   const handleFilterChange = (newFilters: FilterOptions) => {
@@ -31,12 +28,15 @@ export default function BrowseScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { direction: isRTL ? 'rtl' : 'ltr' }]}
-    >
+    <SafeAreaView style={styles.container}>
       <PetFilter onFilterChange={handleFilterChange} initialFilters={filters} />
 
-      <View style={styles.contentContainer}>
+      <View
+        style={[
+          styles.contentContainer,
+          isRTL && styles.rtlDirection, // Support RTL on content
+        ]}
+      >
         <PetList
           pets={pets}
           isLoading={loading}
@@ -50,6 +50,7 @@ export default function BrowseScreen() {
       {/* Banner Ads (web only) */}
       <BannerAd position="left" />
       <BannerAd position="right" />
+      <BannerAd position="bottom" />
     </SafeAreaView>
   );
 }
@@ -61,25 +62,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 0,
   },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 16,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
-    color: '#1F2937',
-  },
-  subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 4,
-  },
   contentContainer: {
     flex: 1,
     ...Platform.select({
@@ -87,7 +69,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         alignSelf: 'center',
         width: '100%',
+        paddingBottom: 100,
       },
     }),
+  },
+  rtlDirection: {
+    flexDirection: 'row-reverse',
   },
 });
