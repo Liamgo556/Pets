@@ -39,7 +39,7 @@ export default function RootLayout() {
         window.history.replaceState(
           {},
           document.title,
-          window.location.pathname
+          window.location.pathname 
         );
       }
 
