@@ -22,6 +22,7 @@ export default function BrowseScreen() {
   const { pets, loading, refreshPets, refreshing } = usePets(filters);
   const { favorites, toggleFavorite } = useFavoritePets();
   const isRTL = I18nManager.isRTL;
+  console.log(isRTL);
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
